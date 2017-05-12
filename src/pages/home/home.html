@@ -1,0 +1,18 @@
+<ion-header>
+  <ion-navbar>
+    <ion-title>Home</ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content padding>
+  <h2>Welcome to the off line analytics demo with redux-beacon and Ionic!</h2>
+  <p *ngIf="connected | async; else elseBlock" style="color: green">The app is connected</p>
+  <ng-template #elseBlock>
+    <p style="color: red">The app is NOT connected</p>
+  </ng-template>
+
+
+  <button ion-button (click)="connect()">Connect</button>
+  <button ion-button (click)="disconnect()">Disconnect</button>
+
+</ion-content>
