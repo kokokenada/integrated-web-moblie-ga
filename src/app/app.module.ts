@@ -19,6 +19,9 @@ import { IAppState } from '../store/app-state';
 // redux-beacon
 import { GoogleAnalytics as GoogleAnalyticsRBGA, Event, PageView } from 'redux-beacon/targets/google-analytics';
 import { CordovaGoogleAnalytics as GoogleAnalyticsRBCGA } from 'redux-beacon/targets/cordova-google-analytics';
+import {
+  GoogleAnalyticsMeasurementProtocol as GoogleAnalyticsRBGAMP
+} from 'redux-beacon-measurement-protocol-target';
 import { logger } from 'redux-beacon/extensions/logger';
 import { createMetaReducer } from 'redux-beacon';
 import { offlineWeb } from 'redux-beacon/extensions/offline-web';
@@ -60,8 +63,25 @@ declare let cordova;
 
 // pass in the connectivity selector as the first parameter
 const offlineStorage = offlineWeb(isConnected);
-const analyticsMetaReducer = createMetaReducer(
-  eventsMap, typeof cordova ===  "undefined" ? GoogleAnalyticsRBGA : GoogleAnalyticsRBCGA, { logger, offlineStorage });
+
+let analyticsMetaReducer;
+let secondMetaReducer;
+let connected;
+if (typeof cordova ===  "undefined") {
+  // Web version
+  console.log('loading web analytics');
+  analyticsMetaReducer = createMetaReducer(
+    eventsMap, GoogleAnalyticsRBGA, { logger, offlineStorage });
+  connected = loggerMetaReducer(analyticsMetaReducer(connectReducer));
+} else {
+  // Mobile App
+  console.log('loading mobile analytics');
+  analyticsMetaReducer = createMetaReducer(
+    eventsMap, GoogleAnalyticsRBCGA, { logger, offlineStorage });
+  secondMetaReducer = createMetaReducer(eventsMap, GoogleAnalyticsRBGAMP, { logger, offlineStorage });
+  connected = loggerMetaReducer(secondMetaReducer(analyticsMetaReducer(connectReducer)));
+}
+
 // A meta reducer is just a function that takes in a reducer, and spits out
 // an augmented reducer
 
@@ -77,7 +97,7 @@ const analyticsMetaReducer = createMetaReducer(
     BrowserModule,
     IonicModule.forRoot(MyApp),
     StoreModule.provideStore({
-      connected: loggerMetaReducer(analyticsMetaReducer(connectReducer)),
+      connected: connected,
       location: navigateReducer,
     })
   ],

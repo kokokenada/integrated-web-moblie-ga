@@ -10,8 +10,14 @@ import {Store} from '@ngrx/store';
 import {CONNECT, DISCONNECT} from '../store/connected.store';
 
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
+import {
+  setConfig,
+  IMeasurementProtocolConfig,
+  XhrPost
+} from 'redux-beacon-measurement-protocol-target';
 
-declare let window;
+
+declare let window, cordova, device;
 
 @Component({
   templateUrl: 'app.html'
@@ -34,14 +40,25 @@ export class MyApp {
       statusBar.styleDefault();
       splashScreen.hide();
 
-      this.ga.startTrackerWithId('UA-98191266-1')
-        .then(() => {
-          console.log('Google Analytics plugin is ready now');
-          // Tracker is ready
-          // You can now track pages or set additional information such as AppVersion or UserId
-        })
-        .catch(e => console.log('Error starting GoogleAnalytics Plugin', e));
-
+//
+      if (typeof cordova !== 'undefined') {
+        this.ga.startTrackerWithId('UA-98191266-1')
+          .then(() => {
+            console.log('Google Analytics plugin is ready now');
+            // Tracker is ready
+            // You can now track pages or set additional information such as AppVersion or UserId
+          })
+          .catch(e => console.log('Error starting GoogleAnalytics Plugin', e));
+        console.log(cordova);
+        console.log(device);
+        let config: IMeasurementProtocolConfig = {
+          trackingId: 'UA-96320061-1',
+          clientId: device.uuid,
+          userAgent: `MobileApp ${device.manufacturer} ${device.model} ${device.platform} ${device.version}`,
+          callback: XhrPost
+        };
+        setConfig(config);
+      }
 
       this.nav.viewDidEnter.subscribe(
         view => {
